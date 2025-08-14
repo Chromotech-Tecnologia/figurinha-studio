@@ -1,8 +1,21 @@
-import { ShoppingCart, User, Search } from "lucide-react";
+import { ShoppingCart, User, Search, LogOut } from "lucide-react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
+import { useAuth } from "@/hooks/useAuth";
+import { useNavigate } from "react-router-dom";
 
 export const Header = () => {
+  const { user, signOut } = useAuth();
+  const navigate = useNavigate();
+
+  const handleAuthClick = () => {
+    if (user) {
+      signOut();
+    } else {
+      navigate("/auth");
+    }
+  };
+
   return (
     <header className="border-b bg-card shadow-soft">
       <div className="container mx-auto px-4 py-3">
@@ -34,9 +47,9 @@ export const Header = () => {
                 3
               </span>
             </Button>
-            <Button variant="outline" size="sm">
-              <User className="w-4 h-4 mr-2" />
-              Login
+            <Button variant="outline" size="sm" onClick={handleAuthClick}>
+              {user ? <LogOut className="w-4 h-4 mr-2" /> : <User className="w-4 h-4 mr-2" />}
+              {user ? "Sair" : "Login"}
             </Button>
           </div>
         </div>
