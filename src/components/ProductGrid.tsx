@@ -1,63 +1,106 @@
 import { ProductCard } from "./ProductCard";
 import { Button } from "./ui/button";
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import emojiPack from "@/assets/emoji-pack.jpg";
 import animalsPack from "@/assets/animals-pack.jpg"; 
 import memesPack from "@/assets/memes-pack.jpg";
 import lovePack from "@/assets/love-pack.jpg";
 
-// Mock data - em uma aplicação real, isso viria de uma API
-const products = [
+interface StickerPack {
+  id: string;
+  name: string;
+  image_url: string | null;
+  price: number;
+  category: string;
+  is_new: boolean;
+}
+
+// Mock data - fallback when no products in database
+const mockProducts = [
   {
     id: "1",
     name: "Pack Emojis Clássicos",
-    image: emojiPack,
+    image_url: emojiPack,
     price: 9.99,
     category: "Emojis",
-    isNew: true,
+    is_new: true,
   },
   {
     id: "2", 
     name: "Animais Fofos",
-    image: animalsPack,
+    image_url: animalsPack,
     price: 12.99,
     category: "Animais",
-    isNew: false,
+    is_new: false,
   },
   {
     id: "3",
     name: "Memes Brasileiros",
-    image: memesPack, 
+    image_url: memesPack, 
     price: 15.99,
     category: "Memes",
-    isNew: true,
+    is_new: true,
   },
   {
     id: "4",
     name: "Pack Romântico",
-    image: lovePack,
+    image_url: lovePack,
     price: 8.99,
     category: "Amor",
-    isNew: false,
+    is_new: false,
   },
   {
     id: "5",
     name: "Comidas Deliciosas", 
-    image: emojiPack,
+    image_url: emojiPack,
     price: 11.99,
     category: "Comida",
-    isNew: false,
+    is_new: false,
   },
   {
     id: "6",
     name: "Esportes Brasil",
-    image: animalsPack,
+    image_url: animalsPack,
     price: 13.99,
     category: "Esportes", 
-    isNew: true,
+    is_new: true,
   }
 ];
 
 export const ProductGrid = () => {
+  const [products, setProducts] = useState<StickerPack[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    loadProducts();
+  }, []);
+
+  const loadProducts = async () => {
+    const { data, error } = await supabase
+      .from('sticker_packs')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (data && data.length > 0) {
+      setProducts(data);
+    } else {
+      // Use mock data if no products in database
+      setProducts(mockProducts);
+    }
+    setLoading(false);
+  };
+
+  if (loading) {
+    return (
+      <section className="py-12 bg-background">
+        <div className="container mx-auto px-4">
+          <div className="text-center">Carregando produtos...</div>
+        </div>
+      </section>
+    );
+  }
+
   return (
     <section className="py-12 bg-background">
       <div className="container mx-auto px-4">
@@ -72,7 +115,15 @@ export const ProductGrid = () => {
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {products.map((product) => (
-            <ProductCard key={product.id} {...product} />
+            <ProductCard 
+              key={product.id} 
+              id={product.id}
+              name={product.name}
+              image={product.image_url || emojiPack}
+              price={parseFloat(product.price.toString())}
+              category={product.category}
+              isNew={product.is_new}
+            />
           ))}
         </div>
 

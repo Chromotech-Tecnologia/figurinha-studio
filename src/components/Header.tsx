@@ -1,19 +1,24 @@
-import { ShoppingCart, User, Search, LogOut } from "lucide-react";
+import { ShoppingCart, User, Search, LogOut, Settings } from "lucide-react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
+import { CartSheet } from "./CartSheet";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
+import { 
+  DropdownMenu, 
+  DropdownMenuContent, 
+  DropdownMenuItem, 
+  DropdownMenuSeparator, 
+  DropdownMenuTrigger 
+} from "./ui/dropdown-menu";
 
 export const Header = () => {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
 
-  const handleAuthClick = () => {
-    if (user) {
-      signOut();
-    } else {
-      navigate("/auth");
-    }
+  const handleSignOut = async () => {
+    await signOut();
+    navigate("/");
   };
 
   return (
@@ -41,16 +46,34 @@ export const Header = () => {
 
           {/* Actions */}
           <div className="flex items-center space-x-4">
-            <Button variant="ghost" size="icon" className="relative">
-              <ShoppingCart className="w-5 h-5" />
-              <span className="absolute -top-2 -right-2 bg-primary text-primary-foreground text-xs rounded-full w-5 h-5 flex items-center justify-center">
-                3
-              </span>
-            </Button>
-            <Button variant="outline" size="sm" onClick={handleAuthClick}>
-              {user ? <LogOut className="w-4 h-4 mr-2" /> : <User className="w-4 h-4 mr-2" />}
-              {user ? "Sair" : "Login"}
-            </Button>
+            <CartSheet />
+            
+            {user ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm">
+                    <User className="w-4 h-4 mr-2" />
+                    Conta
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => navigate("/admin")}>
+                    <Settings className="w-4 h-4 mr-2" />
+                    Administração
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={handleSignOut}>
+                    <LogOut className="w-4 h-4 mr-2" />
+                    Sair
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <Button variant="outline" size="sm" onClick={() => navigate("/auth")}>
+                <User className="w-4 h-4 mr-2" />
+                Login
+              </Button>
+            )}
           </div>
         </div>
       </div>
