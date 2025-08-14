@@ -9,6 +9,7 @@ import { useCart } from "@/hooks/useCart";
 import { useAuth } from "@/hooks/useAuth";
 import { ArrowLeft, CreditCard } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 const Checkout = () => {
   const { items, totalPrice, clearCart } = useCart();
@@ -45,18 +46,49 @@ const Checkout = () => {
     setLoading(true);
 
     try {
-      // Simulate order processing
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // Create order in database
+      const { data: order, error: orderError } = await supabase
+        .from("orders")
+        .insert({
+          user_id: user?.id,
+          total_amount: totalPrice,
+          customer_name: customerInfo.name,
+          customer_email: customerInfo.email,
+          customer_phone: customerInfo.phone,
+          status: "pending",
+          admin_approved: false
+        })
+        .select()
+        .single();
+
+      if (orderError) throw orderError;
+
+      // Create order items
+      const orderItems = items.map(item => ({
+        order_id: order.id,
+        pack_id: item.pack_id,
+        quantity: item.quantity,
+        price: item.price,
+        sticker_pack_name: item.name,
+        sticker_pack_image_url: item.image_url
+      }));
+
+      const { error: itemsError } = await supabase
+        .from("order_items")
+        .insert(orderItems);
+
+      if (itemsError) throw itemsError;
       
       await clearCart();
       
       toast({
         title: "Pedido realizado com sucesso!",
-        description: "Você receberá as figurinhas por email em breve.",
+        description: "Aguarde a aprovação do administrador para prosseguir com o pagamento.",
       });
       
-      navigate("/");
+      navigate("/my-orders");
     } catch (error) {
+      console.error("Error creating order:", error);
       toast({
         title: "Erro no pedido",
         description: "Tente novamente mais tarde",
@@ -165,7 +197,7 @@ const Checkout = () => {
                 </div>
 
                 <Button type="submit" className="w-full" size="lg" disabled={loading}>
-                  {loading ? "Processando..." : `Pagar R$ ${totalPrice.toFixed(2)}`}
+                  {loading ? "Processando..." : `Finalizar Pedido R$ ${totalPrice.toFixed(2)}`}
                 </Button>
               </form>
             </CardContent>

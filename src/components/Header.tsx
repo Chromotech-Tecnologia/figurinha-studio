@@ -57,6 +57,10 @@ export const Header = () => {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => navigate("/my-orders")}>
+                    <ShoppingCart className="w-4 h-4 mr-2" />
+                    Meus Pedidos
+                  </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => navigate("/admin")}>
                     <Settings className="w-4 h-4 mr-2" />
                     Administração

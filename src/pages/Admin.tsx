@@ -4,9 +4,17 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { 
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
-import { Plus, Package, Users, BarChart3, ArrowLeft, Edit, Trash2 } from "lucide-react";
+import { Plus, Package, Users, BarChart3, ArrowLeft, Edit, Trash2, Check, Clock, ExternalLink } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface StickerPack {
@@ -18,7 +26,27 @@ interface StickerPack {
   image_url: string;
   is_featured: boolean;
   is_new: boolean;
+  payment_link: string | null;
+  sticker_files_url: string | null;
   created_at: string;
+}
+
+interface Order {
+  id: string;
+  total_amount: number;
+  status: string;
+  admin_approved: boolean;
+  created_at: string;
+  customer_name: string;
+  customer_email: string;
+  customer_phone: string;
+  order_items: Array<{
+    id: string;
+    quantity: number;
+    price: number;
+    sticker_pack_name: string;
+    sticker_pack_image_url: string;
+  }>;
 }
 
 const Admin = () => {
@@ -27,11 +55,13 @@ const Admin = () => {
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
-  const [packs, setPacks] = useState<StickerPack[]>([]);
+  const [stickerPacks, setStickerPacks] = useState<StickerPack[]>([]);
+  const [orders, setOrders] = useState<Order[]>([]);
   const [stats, setStats] = useState({
     totalPacks: 0,
     totalUsers: 0,
     totalOrders: 0,
+    pendingOrders: 0,
   });
 
   useEffect(() => {
@@ -44,78 +74,168 @@ const Admin = () => {
       return;
     }
 
-    // Check if user is admin
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('role')
-      .eq('id', user.id)
-      .single();
+    try {
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("role")
+        .eq("id", user.id)
+        .single();
 
-    if (profile?.role !== 'admin') {
-      toast({
-        title: "Acesso negado",
-        description: "Você não tem permissão para acessar esta área",
-        variant: "destructive",
-      });
+      if (profile?.role !== "admin") {
+        toast({
+          title: "Acesso negado",
+          description: "Você não tem permissão para acessar esta área",
+          variant: "destructive",
+        });
+        navigate("/");
+        return;
+      }
+
+      setIsAdmin(true);
+      loadData();
+    } catch (error) {
+      console.error("Error checking admin access:", error);
       navigate("/");
-      return;
     }
-
-    setIsAdmin(true);
-    loadData();
   };
 
   const loadData = async () => {
-    setLoading(true);
-    
-    // Load sticker packs
-    const { data: packsData } = await supabase
-      .from('sticker_packs')
-      .select('*')
-      .order('created_at', { ascending: false });
+    try {
+      // Load sticker packs
+      const { data: packs, error: packsError } = await supabase
+        .from("sticker_packs")
+        .select("*")
+        .order("created_at", { ascending: false });
 
-    if (packsData) {
-      setPacks(packsData);
+      if (packsError) throw packsError;
+      setStickerPacks(packs || []);
+
+      // Load orders with items
+      const { data: ordersData, error: ordersError } = await supabase
+        .from("orders")
+        .select(`
+          *,
+          order_items (
+            id,
+            quantity,
+            price,
+            sticker_pack_name,
+            sticker_pack_image_url
+          )
+        `)
+        .order("created_at", { ascending: false });
+
+      if (ordersError) throw ordersError;
+      setOrders(ordersData || []);
+
+      // Load stats
+      const [
+        { count: totalPacks },
+        { count: totalUsers },
+        { count: totalOrders },
+        { count: pendingOrders },
+      ] = await Promise.all([
+        supabase.from("sticker_packs").select("*", { count: "exact", head: true }),
+        supabase.from("profiles").select("*", { count: "exact", head: true }),
+        supabase.from("orders").select("*", { count: "exact", head: true }),
+        supabase.from("orders").select("*", { count: "exact", head: true }).eq("admin_approved", false),
+      ]);
+
+      setStats({
+        totalPacks: totalPacks || 0,
+        totalUsers: totalUsers || 0,
+        totalOrders: totalOrders || 0,
+        pendingOrders: pendingOrders || 0,
+      });
+    } catch (error) {
+      console.error("Error loading data:", error);
+      toast({
+        title: "Erro",
+        description: "Erro ao carregar dados",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
     }
-
-    // Load stats
-    const [
-      { count: packsCount },
-      { count: usersCount },
-      { count: ordersCount }
-    ] = await Promise.all([
-      supabase.from('sticker_packs').select('*', { count: 'exact', head: true }),
-      supabase.from('profiles').select('*', { count: 'exact', head: true }),
-      supabase.from('orders').select('*', { count: 'exact', head: true })
-    ]);
-
-    setStats({
-      totalPacks: packsCount || 0,
-      totalUsers: usersCount || 0,
-      totalOrders: ordersCount || 0,
-    });
-
-    setLoading(false);
   };
 
   const deletePack = async (id: string) => {
-    const { error } = await supabase
-      .from('sticker_packs')
-      .delete()
-      .eq('id', id);
+    try {
+      const { error } = await supabase
+        .from("sticker_packs")
+        .delete()
+        .eq("id", id);
 
-    if (error) {
+      if (error) throw error;
+
+      setStickerPacks(stickerPacks.filter(pack => pack.id !== id));
+      
+      toast({
+        title: "Sucesso",
+        description: "Pacote deletado com sucesso",
+      });
+    } catch (error) {
+      console.error("Error deleting pack:", error);
       toast({
         title: "Erro",
-        description: "Não foi possível excluir o pack",
+        description: "Erro ao deletar pacote",
         variant: "destructive",
       });
-    } else {
-      toast({
-        title: "Pack excluído",
-        description: "Pack removido com sucesso",
-      });
+    }
+  };
+
+  const approveOrder = async (orderId: string) => {
+    try {
+      const { error } = await supabase
+        .from("orders")
+        .update({
+          admin_approved: true,
+          approved_by: user?.id,
+          approved_at: new Date().toISOString()
+        })
+        .eq("id", orderId);
+
+      if (error) throw error;
+
+      // Reload data to update the UI
       loadData();
+      
+      toast({
+        title: "Sucesso",
+        description: "Pedido aprovado com sucesso",
+      });
+    } catch (error) {
+      console.error("Error approving order:", error);
+      toast({
+        title: "Erro",
+        description: "Erro ao aprovar pedido",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const markAsPaid = async (orderId: string) => {
+    try {
+      const { error } = await supabase
+        .from("orders")
+        .update({ status: "paid" })
+        .eq("id", orderId);
+
+      if (error) throw error;
+
+      loadData();
+      
+      toast({
+        title: "Sucesso",
+        description: "Pedido marcado como pago",
+      });
+    } catch (error) {
+      console.error("Error marking as paid:", error);
+      toast({
+        title: "Erro",
+        description: "Erro ao marcar como pago",
+        variant: "destructive",
+      });
     }
   };
 
@@ -143,11 +263,16 @@ const Admin = () => {
           <TabsList>
             <TabsTrigger value="overview">Visão Geral</TabsTrigger>
             <TabsTrigger value="packs">Packs de Figurinhas</TabsTrigger>
-            <TabsTrigger value="orders">Pedidos</TabsTrigger>
+            <TabsTrigger value="orders">
+              Pedidos
+              {stats.pendingOrders > 0 && (
+                <Badge variant="destructive" className="ml-2">{stats.pendingOrders}</Badge>
+              )}
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="overview" className="space-y-6">
-            <div className="grid md:grid-cols-3 gap-6">
+            <div className="grid md:grid-cols-4 gap-6">
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium">Total de Packs</CardTitle>
@@ -170,11 +295,21 @@ const Admin = () => {
 
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Pedidos</CardTitle>
+                  <CardTitle className="text-sm font-medium">Total Pedidos</CardTitle>
                   <BarChart3 className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">{stats.totalOrders}</div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Pendentes</CardTitle>
+                  <Clock className="h-4 w-4 text-orange-500" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-orange-500">{stats.pendingOrders}</div>
                 </CardContent>
               </Card>
             </div>
@@ -184,7 +319,7 @@ const Admin = () => {
             <div className="grid gap-6">
               {loading ? (
                 <div className="text-center py-8">Carregando...</div>
-              ) : packs.length === 0 ? (
+              ) : stickerPacks.length === 0 ? (
                 <Card>
                   <CardContent className="text-center py-8">
                     <Package className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
@@ -198,7 +333,7 @@ const Admin = () => {
                 </Card>
               ) : (
                 <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {packs.map((pack) => (
+                  {stickerPacks.map((pack) => (
                     <Card key={pack.id}>
                       <CardContent className="p-4">
                         <div className="aspect-square bg-muted rounded-lg mb-4 overflow-hidden">
@@ -249,6 +384,25 @@ const Admin = () => {
                             {pack.is_featured && <Badge variant="default">Destaque</Badge>}
                             {pack.is_new && <Badge className="bg-accent">Novo</Badge>}
                           </div>
+
+                          <div className="space-y-1 text-xs">
+                            <div className="flex items-center gap-2">
+                              <span>Link Pagamento:</span>
+                              {pack.payment_link ? (
+                                <Badge variant="outline" className="text-green-600">✓</Badge>
+                              ) : (
+                                <Badge variant="outline" className="text-orange-600">✗</Badge>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span>Arquivos:</span>
+                              {pack.sticker_files_url ? (
+                                <Badge variant="outline" className="text-green-600">✓</Badge>
+                              ) : (
+                                <Badge variant="outline" className="text-orange-600">✗</Badge>
+                              )}
+                            </div>
+                          </div>
                         </div>
                       </CardContent>
                     </Card>
@@ -258,15 +412,100 @@ const Admin = () => {
             </div>
           </TabsContent>
 
-          <TabsContent value="orders">
+          <TabsContent value="orders" className="space-y-6">
             <Card>
               <CardHeader>
-                <CardTitle>Pedidos Recentes</CardTitle>
+                <CardTitle>Gerenciar Pedidos</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-center py-8 text-muted-foreground">
-                  Em desenvolvimento - Lista de pedidos
-                </div>
+                {loading ? (
+                  <div className="text-center py-8">Carregando pedidos...</div>
+                ) : orders.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    Nenhum pedido encontrado
+                  </div>
+                ) : (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Pedido</TableHead>
+                        <TableHead>Cliente</TableHead>
+                        <TableHead>Items</TableHead>
+                        <TableHead>Total</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Ações</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {orders.map((order) => (
+                        <TableRow key={order.id}>
+                          <TableCell>
+                            <div>
+                              <div className="font-medium">#{order.id.slice(-8)}</div>
+                              <div className="text-sm text-muted-foreground">
+                                {new Date(order.created_at).toLocaleDateString('pt-BR')}
+                              </div>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div>
+                              <div className="font-medium">{order.customer_name}</div>
+                              <div className="text-sm text-muted-foreground">{order.customer_email}</div>
+                              <div className="text-sm text-muted-foreground">{order.customer_phone}</div>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="space-y-1">
+                              {order.order_items.map((item) => (
+                                <div key={item.id} className="text-sm">
+                                  {item.sticker_pack_name} (x{item.quantity})
+                                </div>
+                              ))}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <span className="font-bold">R$ {order.total_amount.toFixed(2)}</span>
+                          </TableCell>
+                          <TableCell>
+                            <div className="space-y-1">
+                              {!order.admin_approved ? (
+                                <Badge variant="secondary">Aguardando Aprovação</Badge>
+                              ) : order.status === "pending" ? (
+                                <Badge variant="default">Aprovado - Aguardando Pagamento</Badge>
+                              ) : order.status === "paid" ? (
+                                <Badge variant="default" className="bg-green-600">Pago</Badge>
+                              ) : (
+                                <Badge variant="outline">{order.status}</Badge>
+                              )}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex gap-2">
+                              {!order.admin_approved && (
+                                <Button 
+                                  size="sm" 
+                                  onClick={() => approveOrder(order.id)}
+                                >
+                                  <Check className="w-4 h-4 mr-1" />
+                                  Aprovar
+                                </Button>
+                              )}
+                              {order.admin_approved && order.status === "pending" && (
+                                <Button 
+                                  size="sm" 
+                                  variant="outline"
+                                  onClick={() => markAsPaid(order.id)}
+                                >
+                                  Marcar como Pago
+                                </Button>
+                              )}
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                )}
               </CardContent>
             </Card>
           </TabsContent>

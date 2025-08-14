@@ -24,6 +24,8 @@ const AdminPackForm = () => {
     price: "",
     category: "",
     image_url: "",
+    payment_link: "",
+    sticker_files_url: "",
     is_featured: false,
     is_new: false,
   });
@@ -91,6 +93,8 @@ const AdminPackForm = () => {
       price: data.price.toString(),
       category: data.category,
       image_url: data.image_url || "",
+      payment_link: data.payment_link || "",
+      sticker_files_url: data.sticker_files_url || "",
       is_featured: data.is_featured,
       is_new: data.is_new,
     });
@@ -107,6 +111,8 @@ const AdminPackForm = () => {
         price: parseFloat(formData.price),
         category: formData.category,
         image_url: formData.image_url,
+        payment_link: formData.payment_link || null,
+        sticker_files_url: formData.sticker_files_url || null,
         is_featured: formData.is_featured,
         is_new: formData.is_new,
         created_by: user?.id,
@@ -253,10 +259,36 @@ const AdminPackForm = () => {
                       />
                     </div>
                   )}
-                </div>
+                 </div>
 
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
+                 <div className="space-y-2">
+                   <Label htmlFor="payment_link">Link de Pagamento</Label>
+                   <Input
+                     id="payment_link"
+                     value={formData.payment_link}
+                     onChange={(e) => setFormData({...formData, payment_link: e.target.value})}
+                     placeholder="https://pix.me/link ou link do produto"
+                   />
+                   <p className="text-sm text-muted-foreground">
+                     Link para pagamento (PIX, cartão, etc.)
+                   </p>
+                 </div>
+
+                 <div className="space-y-2">
+                   <Label htmlFor="sticker_files_url">Arquivos das Figurinhas</Label>
+                   <Input
+                     id="sticker_files_url"
+                     value={formData.sticker_files_url}
+                     onChange={(e) => setFormData({...formData, sticker_files_url: e.target.value})}
+                     placeholder="Link para download das figurinhas (ZIP ou pasta)"
+                   />
+                   <p className="text-sm text-muted-foreground">
+                     Link para download das figurinhas (pode ser um arquivo ZIP ou pasta no Google Drive/Dropbox)
+                   </p>
+                 </div>
+
+                 <div className="space-y-4">
+                   <div className="flex items-center justify-between">
                     <div>
                       <Label htmlFor="is_featured" className="text-sm font-medium">
                         Pack em Destaque

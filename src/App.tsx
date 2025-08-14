@@ -10,6 +10,7 @@ import Auth from "./pages/Auth";
 import Checkout from "./pages/Checkout";
 import Admin from "./pages/Admin";
 import AdminPackForm from "./pages/AdminPackForm";
+import MyOrders from "./pages/MyOrders";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -26,6 +27,7 @@ const App = () => (
               <Route path="/" element={<Index />} />
               <Route path="/auth" element={<Auth />} />
               <Route path="/checkout" element={<Checkout />} />
+              <Route path="/my-orders" element={<MyOrders />} />
               <Route path="/admin" element={<Admin />} />
               <Route path="/admin/pack/new" element={<AdminPackForm />} />
               <Route path="/admin/pack/:id" element={<AdminPackForm />} />

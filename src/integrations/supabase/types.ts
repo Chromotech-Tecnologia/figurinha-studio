@@ -61,6 +61,8 @@ export type Database = {
           pack_id: string | null
           price: number
           quantity: number
+          sticker_pack_image_url: string | null
+          sticker_pack_name: string | null
         }
         Insert: {
           created_at?: string
@@ -69,6 +71,8 @@ export type Database = {
           pack_id?: string | null
           price: number
           quantity?: number
+          sticker_pack_image_url?: string | null
+          sticker_pack_name?: string | null
         }
         Update: {
           created_at?: string
@@ -77,6 +81,8 @@ export type Database = {
           pack_id?: string | null
           price?: number
           quantity?: number
+          sticker_pack_image_url?: string | null
+          sticker_pack_name?: string | null
         }
         Relationships: [
           {
@@ -97,7 +103,13 @@ export type Database = {
       }
       orders: {
         Row: {
+          admin_approved: boolean | null
+          approved_at: string | null
+          approved_by: string | null
           created_at: string
+          customer_email: string | null
+          customer_name: string | null
+          customer_phone: string | null
           id: string
           status: string | null
           stripe_session_id: string | null
@@ -106,7 +118,13 @@ export type Database = {
           user_id: string | null
         }
         Insert: {
+          admin_approved?: boolean | null
+          approved_at?: string | null
+          approved_by?: string | null
           created_at?: string
+          customer_email?: string | null
+          customer_name?: string | null
+          customer_phone?: string | null
           id?: string
           status?: string | null
           stripe_session_id?: string | null
@@ -115,7 +133,13 @@ export type Database = {
           user_id?: string | null
         }
         Update: {
+          admin_approved?: boolean | null
+          approved_at?: string | null
+          approved_by?: string | null
           created_at?: string
+          customer_email?: string | null
+          customer_name?: string | null
+          customer_phone?: string | null
           id?: string
           status?: string | null
           stripe_session_id?: string | null
@@ -124,6 +148,13 @@ export type Database = {
           user_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "orders_approved_by_fkey"
+            columns: ["approved_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "orders_user_id_fkey"
             columns: ["user_id"]
@@ -171,7 +202,9 @@ export type Database = {
           is_featured: boolean | null
           is_new: boolean | null
           name: string
+          payment_link: string | null
           price: number
+          sticker_files_url: string | null
           updated_at: string
         }
         Insert: {
@@ -184,7 +217,9 @@ export type Database = {
           is_featured?: boolean | null
           is_new?: boolean | null
           name: string
+          payment_link?: string | null
           price: number
+          sticker_files_url?: string | null
           updated_at?: string
         }
         Update: {
@@ -197,7 +232,9 @@ export type Database = {
           is_featured?: boolean | null
           is_new?: boolean | null
           name?: string
+          payment_link?: string | null
           price?: number
+          sticker_files_url?: string | null
           updated_at?: string
         }
         Relationships: [
