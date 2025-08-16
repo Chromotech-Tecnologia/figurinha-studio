@@ -5,12 +5,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowLeft, Upload, Package } from "lucide-react";
+import { ArrowLeft, Package } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { ImageUpload } from "@/components/ImageUpload";
 
 const AdminPackForm = () => {
   const { id } = useParams();
@@ -24,7 +25,7 @@ const AdminPackForm = () => {
     price: "",
     category: "",
     image_url: "",
-    payment_link: "",
+    quantity: "1",
     sticker_files_url: "",
     is_featured: false,
     is_new: false,
@@ -93,7 +94,7 @@ const AdminPackForm = () => {
       price: data.price.toString(),
       category: data.category,
       image_url: data.image_url || "",
-      payment_link: data.payment_link || "",
+      quantity: data.quantity?.toString() || "1",
       sticker_files_url: data.sticker_files_url || "",
       is_featured: data.is_featured,
       is_new: data.is_new,
@@ -111,7 +112,7 @@ const AdminPackForm = () => {
         price: parseFloat(formData.price),
         category: formData.category,
         image_url: formData.image_url,
-        payment_link: formData.payment_link || null,
+        quantity: parseInt(formData.quantity),
         sticker_files_url: formData.sticker_files_url || null,
         is_featured: formData.is_featured,
         is_new: formData.is_new,
@@ -199,7 +200,7 @@ const AdminPackForm = () => {
                   />
                 </div>
 
-                <div className="grid md:grid-cols-2 gap-4">
+                <div className="grid md:grid-cols-3 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="price">Preço (R$)</Label>
                     <Input
@@ -210,6 +211,18 @@ const AdminPackForm = () => {
                       value={formData.price}
                       onChange={(e) => setFormData({...formData, price: e.target.value})}
                       placeholder="9.99"
+                      required
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="quantity">Quantidade de Figurinhas</Label>
+                    <Input
+                      id="quantity"
+                      type="number"
+                      min="1"
+                      value={formData.quantity}
+                      onChange={(e) => setFormData({...formData, quantity: e.target.value})}
                       required
                     />
                   </div>
@@ -234,61 +247,27 @@ const AdminPackForm = () => {
                   </div>
                 </div>
 
+                <ImageUpload 
+                  onImageUpload={(url) => setFormData({...formData, image_url: url})}
+                  currentImage={formData.image_url}
+                  folder="pack-images"
+                />
+
                 <div className="space-y-2">
-                  <Label htmlFor="image_url">URL da Imagem</Label>
-                  <div className="flex gap-2">
-                    <Input
-                      id="image_url"
-                      value={formData.image_url}
-                      onChange={(e) => setFormData({...formData, image_url: e.target.value})}
-                      placeholder="https://exemplo.com/imagem.jpg"
-                    />
-                    <Button type="button" variant="outline" size="icon">
-                      <Upload className="w-4 h-4" />
-                    </Button>
-                  </div>
-                  {formData.image_url && (
-                    <div className="mt-2">
-                      <img 
-                        src={formData.image_url} 
-                        alt="Preview"
-                        className="w-32 h-32 object-cover rounded border"
-                        onError={(e) => {
-                          e.currentTarget.style.display = 'none';
-                        }}
-                      />
-                    </div>
-                  )}
-                 </div>
+                  <Label htmlFor="sticker_files_url">Arquivos das Figurinhas</Label>
+                  <Input
+                    id="sticker_files_url"
+                    value={formData.sticker_files_url}
+                    onChange={(e) => setFormData({...formData, sticker_files_url: e.target.value})}
+                    placeholder="Link para download das figurinhas (ZIP ou pasta)"
+                  />
+                  <p className="text-sm text-muted-foreground">
+                    Link para download das figurinhas (pode ser um arquivo ZIP ou pasta no Google Drive/Dropbox)
+                  </p>
+                </div>
 
-                 <div className="space-y-2">
-                   <Label htmlFor="payment_link">Link de Pagamento</Label>
-                   <Input
-                     id="payment_link"
-                     value={formData.payment_link}
-                     onChange={(e) => setFormData({...formData, payment_link: e.target.value})}
-                     placeholder="https://pix.me/link ou link do produto"
-                   />
-                   <p className="text-sm text-muted-foreground">
-                     Link para pagamento (PIX, cartão, etc.)
-                   </p>
-                 </div>
-
-                 <div className="space-y-2">
-                   <Label htmlFor="sticker_files_url">Arquivos das Figurinhas</Label>
-                   <Input
-                     id="sticker_files_url"
-                     value={formData.sticker_files_url}
-                     onChange={(e) => setFormData({...formData, sticker_files_url: e.target.value})}
-                     placeholder="Link para download das figurinhas (ZIP ou pasta)"
-                   />
-                   <p className="text-sm text-muted-foreground">
-                     Link para download das figurinhas (pode ser um arquivo ZIP ou pasta no Google Drive/Dropbox)
-                   </p>
-                 </div>
-
-                 <div className="space-y-4">
-                   <div className="flex items-center justify-between">
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
                     <div>
                       <Label htmlFor="is_featured" className="text-sm font-medium">
                         Pack em Destaque

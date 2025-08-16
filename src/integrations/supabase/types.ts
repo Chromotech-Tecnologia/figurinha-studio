@@ -204,6 +204,7 @@ export type Database = {
           name: string
           payment_link: string | null
           price: number
+          quantity: number | null
           sticker_files_url: string | null
           updated_at: string
         }
@@ -219,6 +220,7 @@ export type Database = {
           name: string
           payment_link?: string | null
           price: number
+          quantity?: number | null
           sticker_files_url?: string | null
           updated_at?: string
         }
@@ -234,6 +236,7 @@ export type Database = {
           name?: string
           payment_link?: string | null
           price?: number
+          quantity?: number | null
           sticker_files_url?: string | null
           updated_at?: string
         }

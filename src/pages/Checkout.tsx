@@ -191,9 +191,9 @@ const Checkout = () => {
                     <CreditCard className="w-4 h-4" />
                     Método de Pagamento
                   </h3>
-                  <p className="text-sm text-muted-foreground">
-                    Após confirmar o pedido, você será redirecionado para o pagamento via PIX ou cartão.
-                  </p>
+                   <p className="text-sm text-muted-foreground">
+                     As figurinhas serão enviadas para o WhatsApp cadastrado após confirmação do pagamento.
+                   </p>
                 </div>
 
                 <Button type="submit" className="w-full" size="lg" disabled={loading}>

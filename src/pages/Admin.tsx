@@ -16,6 +16,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { Plus, Package, Users, BarChart3, ArrowLeft, Edit, Trash2, Check, Clock, ExternalLink } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { PaymentLinkDialog } from "@/components/PaymentLinkDialog";
 
 interface StickerPack {
   id: string;
@@ -44,6 +45,7 @@ interface Order {
     id: string;
     quantity: number;
     price: number;
+    pack_id: string;
     sticker_pack_name: string;
     sticker_pack_image_url: string;
   }>;
@@ -62,6 +64,12 @@ const Admin = () => {
     totalUsers: 0,
     totalOrders: 0,
     pendingOrders: 0,
+  });
+  const [paymentDialog, setPaymentDialog] = useState({
+    open: false,
+    orderId: "",
+    orderAmount: 0,
+    packId: "",
   });
 
   useEffect(() => {
@@ -119,6 +127,7 @@ const Admin = () => {
             id,
             quantity,
             price,
+            pack_id,
             sticker_pack_name,
             sticker_pack_image_url
           )
@@ -184,34 +193,24 @@ const Admin = () => {
     }
   };
 
-  const approveOrder = async (orderId: string) => {
-    try {
-      const { error } = await supabase
-        .from("orders")
-        .update({
-          admin_approved: true,
-          approved_by: user?.id,
-          approved_at: new Date().toISOString()
-        })
-        .eq("id", orderId);
-
-      if (error) throw error;
-
-      // Reload data to update the UI
-      loadData();
-      
-      toast({
-        title: "Sucesso",
-        description: "Pedido aprovado com sucesso",
-      });
-    } catch (error) {
-      console.error("Error approving order:", error);
+  const approveOrder = async (order: Order) => {
+    // Get the first pack ID from order items for the payment link
+    const firstPackId = order.order_items[0]?.pack_id;
+    if (!firstPackId) {
       toast({
         title: "Erro",
-        description: "Erro ao aprovar pedido",
+        description: "Não foi possível encontrar o pacote do pedido",
         variant: "destructive",
       });
+      return;
     }
+
+    setPaymentDialog({
+      open: true,
+      orderId: order.id,
+      orderAmount: order.total_amount,
+      packId: firstPackId,
+    });
   };
 
   const markAsPaid = async (orderId: string) => {
@@ -484,7 +483,7 @@ const Admin = () => {
                               {!order.admin_approved && (
                                 <Button 
                                   size="sm" 
-                                  onClick={() => approveOrder(order.id)}
+                                  onClick={() => approveOrder(order)}
                                 >
                                   <Check className="w-4 h-4 mr-1" />
                                   Aprovar
@@ -510,6 +509,15 @@ const Admin = () => {
             </Card>
           </TabsContent>
         </Tabs>
+
+        <PaymentLinkDialog
+          open={paymentDialog.open}
+          onClose={() => setPaymentDialog({ ...paymentDialog, open: false })}
+          orderId={paymentDialog.orderId}
+          orderAmount={paymentDialog.orderAmount}
+          packId={paymentDialog.packId}
+          onSuccess={loadData}
+        />
       </div>
     </div>
   );

@@ -10,10 +10,11 @@ interface ProductCardProps {
   image: string;
   price: number;
   category: string;
+  quantity?: number;
   isNew?: boolean;
 }
 
-export const ProductCard = ({ id, name, image, price, category, isNew }: ProductCardProps) => {
+export const ProductCard = ({ id, name, image, price, category, quantity = 1, isNew }: ProductCardProps) => {
   const { addToCart } = useCart();
 
   const handleAddToCart = () => {
@@ -52,9 +53,10 @@ export const ProductCard = ({ id, name, image, price, category, isNew }: Product
 
         {/* Content */}
         <div className="p-4">
-          <h3 className="font-semibold text-card-foreground mb-2 group-hover:text-primary transition-colors">
+          <h3 className="font-semibold text-card-foreground mb-1 group-hover:text-primary transition-colors">
             {name}
           </h3>
+          <p className="text-sm text-muted-foreground mb-2">{quantity} figurinhas</p>
           
           <div className="flex items-center justify-between">
             <span className="text-lg font-bold text-primary">

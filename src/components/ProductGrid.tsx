@@ -13,17 +13,23 @@ interface StickerPack {
   image_url: string | null;
   price: number;
   category: string;
+  quantity: number;
   is_new: boolean;
 }
 
+interface ProductGridProps {
+  selectedCategory: string;
+}
+
 // Mock data - fallback when no products in database
-const mockProducts = [
+const mockProducts: StickerPack[] = [
   {
     id: "1",
     name: "Pack Emojis Clássicos",
     image_url: emojiPack,
     price: 9.99,
     category: "Emojis",
+    quantity: 50,
     is_new: true,
   },
   {
@@ -32,6 +38,7 @@ const mockProducts = [
     image_url: animalsPack,
     price: 12.99,
     category: "Animais",
+    quantity: 35,
     is_new: false,
   },
   {
@@ -40,6 +47,7 @@ const mockProducts = [
     image_url: memesPack, 
     price: 15.99,
     category: "Memes",
+    quantity: 42,
     is_new: true,
   },
   {
@@ -48,6 +56,7 @@ const mockProducts = [
     image_url: lovePack,
     price: 8.99,
     category: "Amor",
+    quantity: 28,
     is_new: false,
   },
   {
@@ -56,6 +65,7 @@ const mockProducts = [
     image_url: emojiPack,
     price: 11.99,
     category: "Comida",
+    quantity: 33,
     is_new: false,
   },
   {
@@ -64,17 +74,23 @@ const mockProducts = [
     image_url: animalsPack,
     price: 13.99,
     category: "Esportes", 
+    quantity: 25,
     is_new: true,
   }
 ];
 
-export const ProductGrid = () => {
-  const [products, setProducts] = useState<StickerPack[]>([]);
+export const ProductGrid = ({ selectedCategory }: ProductGridProps) => {
+  const [allProducts, setAllProducts] = useState<StickerPack[]>([]);
+  const [filteredProducts, setFilteredProducts] = useState<StickerPack[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     loadProducts();
   }, []);
+
+  useEffect(() => {
+    filterProducts();
+  }, [selectedCategory, allProducts]);
 
   const loadProducts = async () => {
     const { data, error } = await supabase
@@ -83,12 +99,23 @@ export const ProductGrid = () => {
       .order('created_at', { ascending: false });
 
     if (data && data.length > 0) {
-      setProducts(data);
+      setAllProducts(data);
     } else {
       // Use mock data if no products in database
-      setProducts(mockProducts);
+      setAllProducts(mockProducts);
     }
     setLoading(false);
+  };
+
+  const filterProducts = () => {
+    if (selectedCategory === "all") {
+      setFilteredProducts(allProducts);
+    } else {
+      const filtered = allProducts.filter(product => 
+        product.category.toLowerCase().replace(/\s+/g, '-') === selectedCategory
+      );
+      setFilteredProducts(filtered);
+    }
   };
 
   if (loading) {
@@ -114,17 +141,24 @@ export const ProductGrid = () => {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {products.map((product) => (
-            <ProductCard 
-              key={product.id} 
-              id={product.id}
-              name={product.name}
-              image={product.image_url || emojiPack}
-              price={parseFloat(product.price.toString())}
-              category={product.category}
-              isNew={product.is_new}
-            />
-          ))}
+          {filteredProducts.length > 0 ? (
+            filteredProducts.map((product) => (
+              <ProductCard 
+                key={product.id} 
+                id={product.id}
+                name={product.name}
+                image={product.image_url || emojiPack}
+                price={parseFloat(product.price.toString())}
+                category={product.category}
+                quantity={product.quantity || 1}
+                isNew={product.is_new}
+              />
+            ))
+          ) : (
+            <div className="col-span-full text-center py-8 text-muted-foreground">
+              Nenhum produto encontrado nesta categoria
+            </div>
+          )}
         </div>
 
         <div className="text-center mt-12">
