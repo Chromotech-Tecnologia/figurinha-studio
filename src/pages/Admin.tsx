@@ -65,6 +65,7 @@ const Admin = () => {
     totalOrders: 0,
     pendingOrders: 0,
   });
+  const [updatingOrderId, setUpdatingOrderId] = useState<string | null>(null);
   const [paymentDialog, setPaymentDialog] = useState({
     open: false,
     orderId: "",
@@ -214,35 +215,42 @@ const Admin = () => {
   };
 
   const markAsPaid = async (orderId: string) => {
+    setUpdatingOrderId(orderId);
     try {
       const { error } = await supabase
         .from("orders")
         .update({ 
           status: "paid",
+          admin_approved: true,
+          approved_by: user?.id || null,
+          approved_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
         })
-        .eq("id", orderId);
+        .eq("id", orderId)
+        .select();
 
       if (error) throw error;
 
       // Atualiza a lista local
       setOrders(orders.map(order => 
         order.id === orderId 
-          ? { ...order, status: "paid", updated_at: new Date().toISOString() }
+          ? { ...order, status: "paid", admin_approved: true }
           : order
       ));
       
       toast({
         title: "Sucesso",
-        description: "Pedido marcado como pago",
+        description: "Pedido marcado como pago. As figurinhas serão enviadas para o WhatsApp cadastrado.",
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error marking as paid:", error);
       toast({
         title: "Erro",
-        description: "Erro ao marcar como pago",
+        description: error?.message || "Erro ao marcar como pago",
         variant: "destructive",
       });
+    } finally {
+      setUpdatingOrderId(null);
     }
   };
 
@@ -502,8 +510,9 @@ const Admin = () => {
                                   size="sm" 
                                   variant="outline"
                                   onClick={() => markAsPaid(order.id)}
+                                  disabled={updatingOrderId === order.id}
                                 >
-                                  Marcar como Pago
+                                  {updatingOrderId === order.id ? "Marcando..." : "Marcar como Pago"}
                                 </Button>
                               )}
                             </div>
