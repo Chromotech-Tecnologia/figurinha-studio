@@ -1,8 +1,10 @@
-import { ShoppingCart, Eye, Download } from "lucide-react";
+import { ShoppingCart, Eye } from "lucide-react";
 import { Button } from "./ui/button";
 import { Card, CardContent } from "./ui/card";
 import { Badge } from "./ui/badge";
 import { useCart } from "@/hooks/useCart";
+import { useState } from "react";
+import { ProductModal } from "./ProductModal";
 
 interface ProductCardProps {
   id: string;
@@ -12,13 +14,19 @@ interface ProductCardProps {
   category: string;
   quantity?: number;
   isNew?: boolean;
+  description?: string;
 }
 
-export const ProductCard = ({ id, name, image, price, category, quantity = 1, isNew }: ProductCardProps) => {
+export const ProductCard = ({ id, name, image, price, category, quantity = 1, isNew, description }: ProductCardProps) => {
   const { addToCart } = useCart();
+  const [showModal, setShowModal] = useState(false);
 
   const handleAddToCart = () => {
     addToCart(id, name, price, image);
+  };
+
+  const handleViewProduct = () => {
+    setShowModal(true);
   };
 
   return (
@@ -34,14 +42,14 @@ export const ProductCard = ({ id, name, image, price, category, quantity = 1, is
           
           {/* Overlay */}
           <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
-            <div className="flex gap-2">
-              <Button variant="secondary" size="icon" className="h-10 w-10">
-                <Eye className="w-4 h-4" />
-              </Button>
-              <Button variant="premium" size="icon" className="h-10 w-10">
-                <Download className="w-4 h-4" />
-              </Button>
-            </div>
+            <Button 
+              variant="premium" 
+              size="icon" 
+              className="h-10 w-10"
+              onClick={handleViewProduct}
+            >
+              <Eye className="w-4 h-4" />
+            </Button>
           </div>
 
           {/* Badges */}
@@ -69,6 +77,21 @@ export const ProductCard = ({ id, name, image, price, category, quantity = 1, is
           </div>
         </div>
       </CardContent>
+
+      <ProductModal 
+        isOpen={showModal}
+        onClose={() => setShowModal(false)}
+        product={{
+          id,
+          name,
+          image,
+          price,
+          category,
+          quantity,
+          isNew,
+          description
+        }}
+      />
     </Card>
   );
 };

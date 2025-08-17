@@ -217,12 +217,20 @@ const Admin = () => {
     try {
       const { error } = await supabase
         .from("orders")
-        .update({ status: "paid" })
+        .update({ 
+          status: "paid",
+          updated_at: new Date().toISOString()
+        })
         .eq("id", orderId);
 
       if (error) throw error;
 
-      loadData();
+      // Atualiza a lista local
+      setOrders(orders.map(order => 
+        order.id === orderId 
+          ? { ...order, status: "paid", updated_at: new Date().toISOString() }
+          : order
+      ));
       
       toast({
         title: "Sucesso",

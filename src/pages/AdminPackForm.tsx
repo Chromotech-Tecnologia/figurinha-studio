@@ -12,6 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { ArrowLeft, Package } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { ImageUpload } from "@/components/ImageUpload";
+import { StickerFilesUpload } from "@/components/StickerFilesUpload";
 
 const AdminPackForm = () => {
   const { id } = useParams();
@@ -253,18 +254,10 @@ const AdminPackForm = () => {
                   folder="pack-images"
                 />
 
-                <div className="space-y-2">
-                  <Label htmlFor="sticker_files_url">Arquivos das Figurinhas</Label>
-                  <Input
-                    id="sticker_files_url"
-                    value={formData.sticker_files_url}
-                    onChange={(e) => setFormData({...formData, sticker_files_url: e.target.value})}
-                    placeholder="Link para download das figurinhas (ZIP ou pasta)"
-                  />
-                  <p className="text-sm text-muted-foreground">
-                    Link para download das figurinhas (pode ser um arquivo ZIP ou pasta no Google Drive/Dropbox)
-                  </p>
-                </div>
+                <StickerFilesUpload 
+                  onFilesUpload={(url) => setFormData({...formData, sticker_files_url: url})}
+                  currentFiles={formData.sticker_files_url}
+                />
 
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">

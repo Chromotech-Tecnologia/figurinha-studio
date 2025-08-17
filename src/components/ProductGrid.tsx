@@ -15,6 +15,7 @@ interface StickerPack {
   category: string;
   quantity: number;
   is_new: boolean;
+  description?: string;
 }
 
 interface ProductGridProps {
@@ -152,6 +153,7 @@ export const ProductGrid = ({ selectedCategory }: ProductGridProps) => {
                 category={product.category}
                 quantity={product.quantity || 1}
                 isNew={product.is_new}
+                description={product.description}
               />
             ))
           ) : (
