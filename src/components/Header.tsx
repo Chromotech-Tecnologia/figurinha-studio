@@ -1,4 +1,4 @@
-import { ShoppingCart, User, Search, LogOut, Settings } from "lucide-react";
+import { ShoppingCart, User, Search, LogOut, Settings, MessageCircle } from "lucide-react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { CartSheet } from "./CartSheet";
@@ -46,6 +46,15 @@ export const Header = () => {
 
           {/* Actions */}
           <div className="flex items-center space-x-4">
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => window.open("https://wa.me/5511969169869", "_blank")}
+              className="text-green-600 border-green-600 hover:bg-green-50"
+            >
+              <MessageCircle className="w-4 h-4 mr-2" />
+              Suporte
+            </Button>
             <CartSheet />
             
             {user ? (
