@@ -264,17 +264,17 @@ const [loading, setLoading] = useState(true);
             ))}
           </div>
         )}
-        </div>
-        <WhatsAppRequestDialog
-          open={waDialog.open}
-          orderId={waDialog.orderId}
-          defaultPhone={waDialog.phone}
-          onClose={() => setWaDialog({ open: false, orderId: null, phone: "" })}
-          onSuccess={(phone) => {
-            setOrders((prev) => prev.map(o => o.id === waDialog.orderId ? { ...o, whatsapp_requested: true, whatsapp_number: phone } : o));
-          }}
-        />
       </div>
+
+      <WhatsAppRequestDialog
+        open={waDialog.open}
+        orderId={waDialog.orderId}
+        defaultPhone={waDialog.phone}
+        onClose={() => setWaDialog({ open: false, orderId: null, phone: "" })}
+        onSuccess={(phone) => {
+          setOrders((prev) => prev.map(o => o.id === waDialog.orderId ? { ...o, whatsapp_requested: true, whatsapp_number: phone } : o));
+        }}
+      />
     </div>
   );
 };
