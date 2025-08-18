@@ -41,6 +41,8 @@ interface Order {
   customer_name: string;
   customer_email: string;
   customer_phone: string;
+  whatsapp_requested?: boolean;
+  whatsapp_number?: string | null;
   order_items: Array<{
     id: string;
     quantity: number;
@@ -491,6 +493,15 @@ const Admin = () => {
                                 <Badge variant="default" className="bg-green-600">Pago</Badge>
                               ) : (
                                 <Badge variant="outline">{order.status}</Badge>
+                              )}
+
+                              {order.whatsapp_requested && (
+                                <div className="flex items-center gap-2">
+                                  <Badge variant="outline">WhatsApp solicitado</Badge>
+                                  {order.whatsapp_number && (
+                                    <span className="text-xs text-muted-foreground">{order.whatsapp_number}</span>
+                                  )}
+                                </div>
                               )}
                             </div>
                           </TableCell>

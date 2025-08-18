@@ -129,14 +129,37 @@ const [loading, setLoading] = useState(true);
     return <Badge variant="outline">{status}</Badge>;
   };
 
-  const handleDownload = (url: string) => {
-    window.open(url, '_blank');
+  const handleDownload = async (url: string) => {
+    try {
+      // Extrai o caminho do arquivo dentro do bucket "sticker-files" e gera uma URL assinada
+      let filePath = "";
+      const match = url.match(/storage\/v1\/object\/(?:public|sign)\/sticker-files\/(.+)$/);
+      if (match?.[1]) {
+        filePath = decodeURIComponent(match[1]);
+      } else {
+        const prefix = "sticker-files/";
+        filePath = url.startsWith(prefix) ? url.slice(prefix.length) : url;
+      }
+
+      const { data, error } = await supabase.storage
+        .from("sticker-files")
+        .createSignedUrl(filePath, 60);
+
+      if (error || !data?.signedUrl) throw error || new Error("Falha ao gerar link de download");
+      window.open(data.signedUrl, "_blank", "noopener,noreferrer");
+    } catch (err) {
+      console.error("Erro ao gerar URL assinada:", err);
+      toast({
+        title: "Erro no download",
+        description: "Não foi possível baixar o arquivo agora. Tente novamente mais tarde.",
+        variant: "destructive",
+      });
+    }
   };
 
   const handlePayment = (paymentLink: string) => {
     window.open(paymentLink, '_blank');
   };
-
   if (loading) {
     return (
       <div className="min-h-screen bg-background">
