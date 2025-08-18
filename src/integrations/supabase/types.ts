@@ -116,6 +116,8 @@ export type Database = {
           total_amount: number
           updated_at: string
           user_id: string | null
+          whatsapp_number: string | null
+          whatsapp_requested: boolean
         }
         Insert: {
           admin_approved?: boolean | null
@@ -131,6 +133,8 @@ export type Database = {
           total_amount: number
           updated_at?: string
           user_id?: string | null
+          whatsapp_number?: string | null
+          whatsapp_requested?: boolean
         }
         Update: {
           admin_approved?: boolean | null
@@ -146,6 +150,8 @@ export type Database = {
           total_amount?: number
           updated_at?: string
           user_id?: string | null
+          whatsapp_number?: string | null
+          whatsapp_requested?: boolean
         }
         Relationships: [
           {
@@ -290,7 +296,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      request_order_whatsapp: {
+        Args: { p_order_id: string; p_whatsapp_number: string }
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never

@@ -4,9 +4,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Download, ExternalLink } from "lucide-react";
+import { ArrowLeft, Download, ExternalLink, MessageCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
+import { WhatsAppRequestDialog } from "@/components/WhatsAppRequestDialog";
 
 interface Order {
   id: string;
@@ -15,6 +16,9 @@ interface Order {
   admin_approved: boolean;
   created_at: string;
   customer_name: string;
+  customer_phone?: string;
+  whatsapp_requested?: boolean;
+  whatsapp_number?: string | null;
   order_items: Array<{
     id: string;
     quantity: number;
@@ -37,7 +41,8 @@ const MyOrders = () => {
   const { toast } = useToast();
   const [orders, setOrders] = useState<Order[]>([]);
   const [stickerPacks, setStickerPacks] = useState<Record<string, StickerPack>>({});
-  const [loading, setLoading] = useState(true);
+const [loading, setLoading] = useState(true);
+  const [waDialog, setWaDialog] = useState<{open: boolean; orderId: string | null; phone: string}>({ open: false, orderId: null, phone: "" });
 
   useEffect(() => {
     if (!user) {
@@ -58,6 +63,9 @@ const MyOrders = () => {
           admin_approved,
           created_at,
           customer_name,
+          customer_phone,
+          whatsapp_requested,
+          whatsapp_number,
           order_items (
             id,
             quantity,
@@ -222,18 +230,30 @@ const MyOrders = () => {
                             </Button>
                           )}
                           
-                          {/* Show download button if paid */}
-                          {order.status === "paid" && 
-                           stickerPacks[item.pack_id]?.sticker_files_url && (
-                            <Button 
-                              size="sm" 
-                              variant="outline"
-                              onClick={() => handleDownload(stickerPacks[item.pack_id].sticker_files_url!)}
-                              className="ml-2"
-                            >
-                              <Download className="w-4 h-4 mr-1" />
-                              Download
-                            </Button>
+                          {/* Actions when paid */}
+                          {order.status === "paid" && (
+                            <>
+                              {stickerPacks[item.pack_id]?.sticker_files_url && (
+                                <Button 
+                                  size="sm" 
+                                  variant="outline"
+                                  onClick={() => handleDownload(stickerPacks[item.pack_id].sticker_files_url!)}
+                                  className="ml-2"
+                                >
+                                  <Download className="w-4 h-4 mr-1" />
+                                  Download
+                                </Button>
+                              )}
+                              <Button
+                                size="sm"
+                                onClick={() => setWaDialog({ open: true, orderId: order.id, phone: order.whatsapp_number || order.customer_phone || "" })}
+                                className="ml-2"
+                                variant={order.whatsapp_requested ? "secondary" : "default"}
+                              >
+                                <MessageCircle className="w-4 h-4 mr-1" />
+                                {order.whatsapp_requested ? "Solicitado via WhatsApp" : "Me envie pelo WhatsApp"}
+                              </Button>
+                            </>
                           )}
                         </div>
                       </div>
@@ -244,6 +264,16 @@ const MyOrders = () => {
             ))}
           </div>
         )}
+        </div>
+        <WhatsAppRequestDialog
+          open={waDialog.open}
+          orderId={waDialog.orderId}
+          defaultPhone={waDialog.phone}
+          onClose={() => setWaDialog({ open: false, orderId: null, phone: "" })}
+          onSuccess={(phone) => {
+            setOrders((prev) => prev.map(o => o.id === waDialog.orderId ? { ...o, whatsapp_requested: true, whatsapp_number: phone } : o));
+          }}
+        />
       </div>
     </div>
   );

@@ -10,6 +10,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { ArrowLeft, CreditCard } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import InputMask from "react-input-mask";
 
 const Checkout = () => {
   const { items, totalPrice, clearCart } = useCart();
