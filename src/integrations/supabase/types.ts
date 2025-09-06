@@ -110,6 +110,7 @@ export type Database = {
           customer_email: string | null
           customer_name: string | null
           customer_phone: string | null
+          deleted_at: string | null
           id: string
           status: string | null
           stripe_session_id: string | null
@@ -127,6 +128,7 @@ export type Database = {
           customer_email?: string | null
           customer_name?: string | null
           customer_phone?: string | null
+          deleted_at?: string | null
           id?: string
           status?: string | null
           stripe_session_id?: string | null
@@ -144,6 +146,7 @@ export type Database = {
           customer_email?: string | null
           customer_name?: string | null
           customer_phone?: string | null
+          deleted_at?: string | null
           id?: string
           status?: string | null
           stripe_session_id?: string | null
@@ -298,6 +301,14 @@ export type Database = {
     Functions: {
       request_order_whatsapp: {
         Args: { p_order_id: string; p_whatsapp_number: string }
+        Returns: undefined
+      }
+      restore_order: {
+        Args: { p_order_id: string }
+        Returns: undefined
+      }
+      soft_delete_order: {
+        Args: { p_order_id: string }
         Returns: undefined
       }
     }

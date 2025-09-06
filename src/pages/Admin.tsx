@@ -14,9 +14,10 @@ import {
 } from "@/components/ui/table";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
-import { Plus, Package, Users, BarChart3, ArrowLeft, Edit, Trash2, Check, Clock, ExternalLink } from "lucide-react";
+import { Plus, Package, Users, BarChart3, ArrowLeft, Edit, Trash2, Check, Clock, ExternalLink, RotateCcw, Archive } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { PaymentLinkDialog } from "@/components/PaymentLinkDialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface StickerPack {
   id: string;
@@ -43,6 +44,7 @@ interface Order {
   customer_phone: string;
   whatsapp_requested?: boolean;
   whatsapp_number?: string | null;
+  deleted_at?: string | null;
   order_items: Array<{
     id: string;
     quantity: number;
@@ -74,6 +76,7 @@ const Admin = () => {
     orderAmount: 0,
     packId: "",
   });
+  const [orderFilter, setOrderFilter] = useState<"active" | "deleted">("active");
 
   useEffect(() => {
     checkAdminAccess();
@@ -191,6 +194,64 @@ const Admin = () => {
       toast({
         title: "Erro",
         description: "Erro ao deletar pacote",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const softDeleteOrder = async (orderId: string) => {
+    try {
+      const { error } = await supabase.rpc('soft_delete_order', {
+        p_order_id: orderId
+      });
+
+      if (error) throw error;
+
+      // Atualiza a lista local
+      setOrders(orders.map(order => 
+        order.id === orderId 
+          ? { ...order, deleted_at: new Date().toISOString() }
+          : order
+      ));
+      
+      toast({
+        title: "Sucesso",
+        description: "Pedido excluído com sucesso",
+      });
+    } catch (error: any) {
+      console.error("Error deleting order:", error);
+      toast({
+        title: "Erro",
+        description: error?.message || "Erro ao excluir pedido",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const restoreOrder = async (orderId: string) => {
+    try {
+      const { error } = await supabase.rpc('restore_order', {
+        p_order_id: orderId
+      });
+
+      if (error) throw error;
+
+      // Atualiza a lista local
+      setOrders(orders.map(order => 
+        order.id === orderId 
+          ? { ...order, deleted_at: null }
+          : order
+      ));
+      
+      toast({
+        title: "Sucesso",
+        description: "Pedido restaurado com sucesso",
+      });
+    } catch (error: any) {
+      console.error("Error restoring order:", error);
+      toast({
+        title: "Erro",
+        description: error?.message || "Erro ao restaurar pedido",
         variant: "destructive",
       });
     }
@@ -411,14 +472,19 @@ const Admin = () => {
                                 <Badge variant="outline" className="text-orange-600">✗</Badge>
                               )}
                             </div>
-                            <div className="flex items-center gap-2">
-                              <span>Arquivos:</span>
-                              {pack.sticker_files_url ? (
-                                <Badge variant="outline" className="text-green-600">✓</Badge>
-                              ) : (
-                                <Badge variant="outline" className="text-orange-600">✗</Badge>
-                              )}
-                            </div>
+                             <div className="flex items-center gap-2">
+                               <span>Arquivos:</span>
+                               {pack.sticker_files_url ? (
+                                 <div className="flex items-center gap-1">
+                                   <Badge variant="outline" className="text-green-600">✓</Badge>
+                                   <span className="text-xs text-muted-foreground truncate max-w-20">
+                                     {pack.sticker_files_url.split('/').pop()}
+                                   </span>
+                                 </div>
+                               ) : (
+                                 <Badge variant="outline" className="text-orange-600">✗</Badge>
+                               )}
+                             </div>
                           </div>
                         </div>
                       </CardContent>
@@ -431,8 +497,17 @@ const Admin = () => {
 
           <TabsContent value="orders" className="space-y-6">
             <Card>
-              <CardHeader>
+              <CardHeader className="flex flex-row items-center justify-between">
                 <CardTitle>Gerenciar Pedidos</CardTitle>
+                <Select value={orderFilter} onValueChange={(value: "active" | "deleted") => setOrderFilter(value)}>
+                  <SelectTrigger className="w-48">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="active">Pedidos Ativos</SelectItem>
+                    <SelectItem value="deleted">Pedidos Excluídos</SelectItem>
+                  </SelectContent>
+                </Select>
               </CardHeader>
               <CardContent>
                 {loading ? (
@@ -454,7 +529,9 @@ const Admin = () => {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {orders.map((order) => (
+                      {orders
+                        .filter(order => orderFilter === "active" ? !order.deleted_at : !!order.deleted_at)
+                        .map((order) => (
                         <TableRow key={order.id}>
                           <TableCell>
                             <div>
@@ -507,23 +584,44 @@ const Admin = () => {
                           </TableCell>
                           <TableCell>
                             <div className="flex gap-2">
-                              {!order.admin_approved && (
-                                <Button 
-                                  size="sm" 
-                                  onClick={() => approveOrder(order)}
-                                >
-                                  <Check className="w-4 h-4 mr-1" />
-                                  Aprovar
-                                </Button>
-                              )}
-                              {order.admin_approved && order.status === "pending" && (
+                              {orderFilter === "active" ? (
+                                <>
+                                  {!order.admin_approved && (
+                                    <Button 
+                                      size="sm" 
+                                      onClick={() => approveOrder(order)}
+                                    >
+                                      <Check className="w-4 h-4 mr-1" />
+                                      Aprovar
+                                    </Button>
+                                  )}
+                                  {order.admin_approved && order.status === "pending" && (
+                                    <Button 
+                                      size="sm" 
+                                      variant="outline"
+                                      onClick={() => markAsPaid(order.id)}
+                                      disabled={updatingOrderId === order.id}
+                                    >
+                                      {updatingOrderId === order.id ? "Marcando..." : "Marcar como Pago"}
+                                    </Button>
+                                  )}
+                                  <Button 
+                                    size="sm" 
+                                    variant="destructive"
+                                    onClick={() => softDeleteOrder(order.id)}
+                                  >
+                                    <Archive className="w-4 h-4 mr-1" />
+                                    Excluir
+                                  </Button>
+                                </>
+                              ) : (
                                 <Button 
                                   size="sm" 
                                   variant="outline"
-                                  onClick={() => markAsPaid(order.id)}
-                                  disabled={updatingOrderId === order.id}
+                                  onClick={() => restoreOrder(order.id)}
                                 >
-                                  {updatingOrderId === order.id ? "Marcando..." : "Marcar como Pago"}
+                                  <RotateCcw className="w-4 h-4 mr-1" />
+                                  Restaurar
                                 </Button>
                               )}
                             </div>

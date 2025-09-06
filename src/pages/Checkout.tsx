@@ -7,14 +7,15 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { useCart } from "@/hooks/useCart";
 import { useAuth } from "@/hooks/useAuth";
-import { ArrowLeft, CreditCard } from "lucide-react";
+import { ArrowLeft, CreditCard, User } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import InputMask from "react-input-mask";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 const Checkout = () => {
   const { items, totalPrice, clearCart } = useCart();
-  const { user } = useAuth();
+  const { user, signUp, signIn } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
@@ -22,36 +23,82 @@ const Checkout = () => {
     name: "",
     email: "",
     phone: "",
+    password: "",
   });
+  const [needsAccount, setNeedsAccount] = useState(false);
+  const [hasAccount, setHasAccount] = useState(false);
 
   useEffect(() => {
-    if (!user) {
-      navigate("/auth");
-      return;
-    }
-    
     if (items.length === 0) {
       navigate("/");
       return;
     }
 
-    setCustomerInfo({
-      name: "",
-      email: user.email || "",
-      phone: "",
-    });
+    if (user) {
+      setCustomerInfo({
+        name: "",
+        email: user.email || "",
+        phone: "",
+        password: "",
+      });
+    }
   }, [user, items.length, navigate]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
+  const handleAccountCheck = async () => {
+    if (!customerInfo.email) return;
+    
+    const { data } = await supabase.auth.getUser();
+    if (!data.user) {
+      setNeedsAccount(true);
+    }
+  };
 
+  const handleCreateAccountAndOrder = async () => {
+    setLoading(true);
     try {
+      let currentUser = user;
+      
+      if (!user) {
+        if (hasAccount) {
+          // User says they have account, try to sign in
+          const { error: signInError } = await signIn(customerInfo.email, customerInfo.password);
+          if (signInError) {
+            toast({
+              title: "Erro no login",
+              description: "Email ou senha incorretos. Tente novamente.",
+              variant: "destructive",
+            });
+            return;
+          }
+          // Get the user after sign in
+          const { data } = await supabase.auth.getUser();
+          currentUser = data.user;
+        } else {
+          // Create new account
+          const { error: signUpError } = await signUp(customerInfo.email, customerInfo.password, customerInfo.name);
+          if (signUpError) {
+            toast({
+              title: "Erro no cadastro",
+              description: signUpError.message,
+              variant: "destructive",
+            });
+            return;
+          }
+          // Get the user after sign up
+          const { data } = await supabase.auth.getUser();
+          currentUser = data.user;
+        }
+      }
+
+      if (!currentUser) {
+        throw new Error("Erro ao autenticar usuário");
+      }
+
       // Create order in database
       const { data: order, error: orderError } = await supabase
         .from("orders")
         .insert({
-          user_id: user?.id,
+          user_id: currentUser.id,
           total_amount: totalPrice,
           customer_name: customerInfo.name,
           customer_email: customerInfo.email,
@@ -100,7 +147,18 @@ const Checkout = () => {
     }
   };
 
-  if (!user || items.length === 0) {
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!user) {
+      await handleAccountCheck();
+      return;
+    }
+    
+    await handleCreateAccountAndOrder();
+  };
+
+  if (items.length === 0) {
     return null;
   }
 
@@ -148,9 +206,38 @@ const Checkout = () => {
           {/* Customer Information */}
           <Card>
             <CardHeader>
-              <CardTitle>Informações do Cliente</CardTitle>
+              <CardTitle className="flex items-center gap-2">
+                <User className="w-5 h-5" />
+                {user ? "Informações do Cliente" : "Dados para Compra"}
+              </CardTitle>
             </CardHeader>
             <CardContent>
+              {!user && needsAccount && (
+                <Alert className="mb-4">
+                  <AlertDescription>
+                    <div className="space-y-3">
+                      <p>Para finalizar sua compra, você precisa ter uma conta.</p>
+                      <div className="flex gap-2">
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => setHasAccount(true)}
+                        >
+                          Já tenho conta
+                        </Button>
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => setHasAccount(false)}
+                        >
+                          Criar nova conta
+                        </Button>
+                      </div>
+                    </div>
+                  </AlertDescription>
+                </Alert>
+              )}
+
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="name">Nome Completo</Label>
@@ -170,8 +257,26 @@ const Checkout = () => {
                     value={customerInfo.email}
                     onChange={(e) => setCustomerInfo({...customerInfo, email: e.target.value})}
                     required
+                    disabled={!!user}
                   />
                 </div>
+                
+                {!user && needsAccount && (
+                  <div className="space-y-2">
+                    <Label htmlFor="password">
+                      {hasAccount ? "Senha" : "Criar Senha"}
+                    </Label>
+                    <Input
+                      id="password"
+                      type="password"
+                      value={customerInfo.password}
+                      onChange={(e) => setCustomerInfo({...customerInfo, password: e.target.value})}
+                      placeholder={hasAccount ? "Digite sua senha" : "Mínimo 6 caracteres"}
+                      required
+                      minLength={6}
+                    />
+                  </div>
+                )}
                 
                 <div className="space-y-2">
                   <Label htmlFor="phone">Telefone/WhatsApp</Label>
@@ -198,8 +303,22 @@ const Checkout = () => {
                 </div>
 
                 <Button type="submit" className="w-full" size="lg" disabled={loading}>
-                  {loading ? "Processando..." : `Finalizar Pedido R$ ${totalPrice.toFixed(2)}`}
+                  {loading ? "Processando..." : 
+                   !user && needsAccount ? (hasAccount ? "Fazer Login e Finalizar" : "Criar Conta e Finalizar") :
+                   `Finalizar Pedido R$ ${totalPrice.toFixed(2)}`}
                 </Button>
+
+                {!user && !needsAccount && (
+                  <div className="text-center">
+                    <Button 
+                      type="button" 
+                      variant="link" 
+                      onClick={() => navigate("/auth")}
+                    >
+                      Já tem uma conta? Faça login
+                    </Button>
+                  </div>
+                )}
               </form>
             </CardContent>
           </Card>

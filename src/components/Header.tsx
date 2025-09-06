@@ -11,6 +11,7 @@ import {
   DropdownMenuSeparator, 
   DropdownMenuTrigger 
 } from "./ui/dropdown-menu";
+import logoImage from "@/assets/logo.png";
 
 export const Header = () => {
   const { user, signOut } = useAuth();
@@ -26,9 +27,9 @@ export const Header = () => {
       <div className="container mx-auto px-4 py-3">
         <div className="flex items-center justify-between">
           {/* Logo */}
-          <div className="flex items-center space-x-2">
-            <div className="w-8 h-8 bg-gradient-primary rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-lg">F</span>
+          <div className="flex items-center space-x-2 cursor-pointer" onClick={() => navigate("/")}>
+            <div className="w-10 h-10 flex items-center justify-center">
+              <img src={logoImage} alt="Figurinha Studio" className="w-full h-full object-contain" />
             </div>
             <h1 className="text-xl font-bold text-primary">Figurinha Studio</h1>
           </div>

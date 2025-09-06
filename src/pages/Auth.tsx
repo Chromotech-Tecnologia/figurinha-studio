@@ -1,20 +1,26 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+import logoImage from "@/assets/logo.png";
 
 const Auth = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
   const [loading, setLoading] = useState(false);
+  const [resetEmailSent, setResetEmailSent] = useState(false);
+  const [activeTab, setActiveTab] = useState("signin");
   
   const { signIn, signUp, user } = useAuth();
   const navigate = useNavigate();
+  const { toast } = useToast();
 
   useEffect(() => {
     if (user) {
@@ -43,12 +49,44 @@ const Auth = () => {
     setLoading(false);
   };
 
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email) {
+      toast({
+        title: "Email obrigatório",
+        description: "Por favor, digite seu email para recuperar a senha.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    setLoading(true);
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/auth?tab=reset-password`
+    });
+    
+    if (error) {
+      toast({
+        title: "Erro",
+        description: error.message,
+        variant: "destructive"
+      });
+    } else {
+      setResetEmailSent(true);
+      toast({
+        title: "Email enviado!",
+        description: "Verifique sua caixa de entrada para redefinir sua senha."
+      });
+    }
+    setLoading(false);
+  };
+
   return (
     <div className="min-h-screen bg-gradient-primary flex items-center justify-center p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <div className="w-12 h-12 bg-gradient-primary rounded-lg flex items-center justify-center mx-auto mb-4">
-            <span className="text-white font-bold text-xl">F</span>
+          <div className="w-16 h-16 rounded-lg flex items-center justify-center mx-auto mb-4">
+            <img src={logoImage} alt="Figurinha Studio" className="w-full h-full object-contain" />
           </div>
           <CardTitle className="text-2xl">Figurinha Studio</CardTitle>
           <CardDescription>
@@ -56,10 +94,11 @@ const Auth = () => {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Tabs defaultValue="signin" className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+            <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="signin">Entrar</TabsTrigger>
               <TabsTrigger value="signup">Cadastrar</TabsTrigger>
+              <TabsTrigger value="forgot">Esqueci Senha</TabsTrigger>
             </TabsList>
             
             <TabsContent value="signin">
@@ -89,6 +128,15 @@ const Auth = () => {
                 <Button type="submit" className="w-full" disabled={loading}>
                   {loading ? "Entrando..." : "Entrar"}
                 </Button>
+                <div className="text-center mt-4">
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab("forgot")}
+                    className="text-sm text-primary hover:underline"
+                  >
+                    Esqueci minha senha
+                  </button>
+                </div>
               </form>
             </TabsContent>
             
@@ -131,6 +179,40 @@ const Auth = () => {
                 <Button type="submit" className="w-full" disabled={loading}>
                   {loading ? "Cadastrando..." : "Cadastrar"}
                 </Button>
+              </form>
+            </TabsContent>
+            
+            <TabsContent value="forgot">
+              <form onSubmit={handleForgotPassword} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="forgot-email">Email</Label>
+                  <Input
+                    id="forgot-email"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="seu@email.com"
+                    required
+                  />
+                </div>
+                {resetEmailSent ? (
+                  <div className="text-center text-sm text-muted-foreground">
+                    Verifique sua caixa de entrada para redefinir sua senha.
+                  </div>
+                ) : (
+                  <Button type="submit" className="w-full" disabled={loading}>
+                    {loading ? "Enviando..." : "Enviar Link de Recuperação"}
+                  </Button>
+                )}
+                <div className="text-center mt-4">
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab("signin")}
+                    className="text-sm text-primary hover:underline"
+                  >
+                    Voltar ao login
+                  </button>
+                </div>
               </form>
             </TabsContent>
           </Tabs>
