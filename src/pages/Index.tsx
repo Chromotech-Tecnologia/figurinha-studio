@@ -12,11 +12,13 @@ const Index = () => {
     <div className="min-h-screen bg-background">
       <Header />
       <Hero />
-      <CategoryFilter 
-        selectedCategory={selectedCategory}
-        onCategoryChange={setSelectedCategory}
-      />
-      <ProductGrid selectedCategory={selectedCategory} />
+      <div data-section="products">
+        <CategoryFilter 
+          selectedCategory={selectedCategory}
+          onCategoryChange={setSelectedCategory}
+        />
+        <ProductGrid selectedCategory={selectedCategory} />
+      </div>
       <Footer />
     </div>
   );
