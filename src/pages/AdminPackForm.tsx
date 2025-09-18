@@ -165,7 +165,7 @@ const AdminPackForm = () => {
           <Button variant="ghost" size="icon" onClick={() => navigate("/admin")}>
             <ArrowLeft className="w-4 h-4" />
           </Button>
-          <div className="w-8 h-8 flex items-center justify-center">
+          <div className="w-10 h-10 flex items-center justify-center">
             <img src={logoImage} alt="Figurinha Studio" className="w-full h-full object-contain" />
           </div>
           <h1 className="text-3xl font-bold">

@@ -28,7 +28,7 @@ export const Header = () => {
         <div className="flex items-center justify-between">
           {/* Logo */}
           <div className="flex items-center space-x-2 cursor-pointer" onClick={() => navigate("/")}>
-            <div className="w-10 h-10 flex items-center justify-center">
+            <div className="w-12 h-12 flex items-center justify-center">
               <img src={logoImage} alt="Figurinha Studio" className="w-full h-full object-contain" />
             </div>
             <h1 className="text-xl font-bold text-primary">Figurinha Studio</h1>
