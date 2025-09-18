@@ -8,7 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import logoImage from "@/assets/logo.png";
+import logoImage from "@/assets/figurinha-logo.png";
 
 const Auth = () => {
   const [email, setEmail] = useState("");

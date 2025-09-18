@@ -11,7 +11,7 @@ import {
   DropdownMenuSeparator, 
   DropdownMenuTrigger 
 } from "./ui/dropdown-menu";
-import logoImage from "@/assets/logo.png";
+import logoImage from "@/assets/figurinha-logo.png";
 
 export const Header = () => {
   const { user, signOut } = useAuth();

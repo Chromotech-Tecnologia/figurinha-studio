@@ -18,6 +18,7 @@ import { Plus, Package, Users, BarChart3, ArrowLeft, Edit, Trash2, Check, Clock,
 import { useToast } from "@/hooks/use-toast";
 import { PaymentLinkDialog } from "@/components/PaymentLinkDialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import logoImage from "@/assets/figurinha-logo.png";
 
 interface StickerPack {
   id: string;
@@ -329,6 +330,9 @@ const Admin = () => {
             <Button variant="ghost" size="icon" onClick={() => navigate("/")}>
               <ArrowLeft className="w-4 h-4" />
             </Button>
+            <div className="w-8 h-8 flex items-center justify-center">
+              <img src={logoImage} alt="Figurinha Studio" className="w-full h-full object-contain" />
+            </div>
             <h1 className="text-3xl font-bold">Administração</h1>
           </div>
           <Button onClick={() => navigate("/admin/pack/new")}>

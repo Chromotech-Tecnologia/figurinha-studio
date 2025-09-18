@@ -12,6 +12,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import InputMask from "react-input-mask";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import logoImage from "@/assets/figurinha-logo.png";
 
 const Checkout = () => {
   const { items, totalPrice, clearCart } = useCart();
@@ -169,6 +170,9 @@ const Checkout = () => {
           <Button variant="ghost" size="icon" onClick={() => navigate("/")}>
             <ArrowLeft className="w-4 h-4" />
           </Button>
+          <div className="w-8 h-8 flex items-center justify-center">
+            <img src={logoImage} alt="Figurinha Studio" className="w-full h-full object-contain" />
+          </div>
           <h1 className="text-3xl font-bold">Finalizar Compra</h1>
         </div>
 

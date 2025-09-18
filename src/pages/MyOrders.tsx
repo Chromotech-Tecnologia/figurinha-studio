@@ -8,6 +8,7 @@ import { ArrowLeft, Download, ExternalLink, MessageCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { WhatsAppRequestDialog } from "@/components/WhatsAppRequestDialog";
+import logoImage from "@/assets/figurinha-logo.png";
 
 interface Order {
   id: string;
@@ -184,6 +185,9 @@ const [loading, setLoading] = useState(true);
           <Button variant="ghost" size="icon" onClick={() => navigate("/")}>
             <ArrowLeft className="w-4 h-4" />
           </Button>
+          <div className="w-8 h-8 flex items-center justify-center">
+            <img src={logoImage} alt="Figurinha Studio" className="w-full h-full object-contain" />
+          </div>
           <h1 className="text-3xl font-bold">Meus Pedidos</h1>
         </div>
 

@@ -13,6 +13,7 @@ import { ArrowLeft, Package } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { ImageUpload } from "@/components/ImageUpload";
 import { StickerFilesUpload } from "@/components/StickerFilesUpload";
+import logoImage from "@/assets/figurinha-logo.png";
 
 const AdminPackForm = () => {
   const { id } = useParams();
@@ -164,6 +165,9 @@ const AdminPackForm = () => {
           <Button variant="ghost" size="icon" onClick={() => navigate("/admin")}>
             <ArrowLeft className="w-4 h-4" />
           </Button>
+          <div className="w-8 h-8 flex items-center justify-center">
+            <img src={logoImage} alt="Figurinha Studio" className="w-full h-full object-contain" />
+          </div>
           <h1 className="text-3xl font-bold">
             {id ? "Editar Pack" : "Novo Pack de Figurinhas"}
           </h1>

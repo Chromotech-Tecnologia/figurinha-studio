@@ -1,6 +1,7 @@
 import { Facebook, Instagram, Twitter, Mail, Phone, MapPin } from "lucide-react";
 import { Button } from "./ui/button";
 import { Separator } from "./ui/separator";
+import logoImage from "@/assets/figurinha-logo.png";
 
 export const Footer = () => {
   return (
@@ -10,8 +11,8 @@ export const Footer = () => {
           {/* Logo e Descrição */}
           <div className="space-y-4">
             <div className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-gradient-primary rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-lg">F</span>
+              <div className="w-8 h-8 flex items-center justify-center">
+                <img src={logoImage} alt="Figurinha Studio" className="w-full h-full object-contain" />
               </div>
               <h3 className="text-xl font-bold text-primary">Figurinha Studio</h3>
             </div>
