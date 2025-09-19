@@ -2,10 +2,8 @@ import { Facebook, Instagram, Twitter, Mail, Phone, MapPin } from "lucide-react"
 import { Button } from "./ui/button";
 import { Separator } from "./ui/separator";
 import logoImage from "@/assets/figurinha-logo.png";
-
 export const Footer = () => {
-  return (
-    <footer className="bg-card border-t">
+  return <footer className="bg-card border-t">
       <div className="container mx-auto px-4 py-12">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           {/* Logo e Descrição */}
@@ -67,7 +65,7 @@ export const Footer = () => {
               </div>
               <div className="flex items-center space-x-3 text-muted-foreground">
                 <Phone className="w-4 h-4" />
-                <span>(11) 99999-9999</span>
+                <span>(11) 96916-9869</span>
               </div>
               <div className="flex items-center space-x-3 text-muted-foreground">
                 <MapPin className="w-4 h-4" />
@@ -88,6 +86,5 @@ export const Footer = () => {
           </div>
         </div>
       </div>
-    </footer>
-  );
+    </footer>;
 };
