@@ -11,7 +11,7 @@ export const Footer = () => {
           {/* Logo e Descrição */}
           <div className="space-y-4">
             <div className="flex items-center space-x-2">
-              <div className="w-12 h-12 flex items-center justify-center">
+              <div className="w-20 h-20 flex items-center justify-center">
                 <img src={logoImage} alt="Figurinha Studio" className="w-full h-full object-contain" />
               </div>
               <h3 className="text-xl font-bold text-primary">Figurinha Studio</h3>

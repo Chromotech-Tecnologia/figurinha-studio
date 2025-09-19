@@ -85,7 +85,7 @@ const Auth = () => {
     <div className="min-h-screen bg-gradient-primary flex items-center justify-center p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <div className="w-16 h-16 rounded-lg flex items-center justify-center mx-auto mb-4">
+          <div className="w-24 h-24 rounded-lg flex items-center justify-center mx-auto mb-4">
             <img src={logoImage} alt="Figurinha Studio" className="w-full h-full object-contain" />
           </div>
           <CardTitle className="text-2xl">Figurinha Studio</CardTitle>
