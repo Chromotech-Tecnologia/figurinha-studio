@@ -345,7 +345,7 @@ const AdminPackForm = () => {
                         <ImageUpload
                           onImageUpload={(url) => updateImage(index, url)}
                           currentImage={image.image_url}
-                          folder="pack-gallery"
+                          folder="pack-images"
                         />
                       </div>
                       <Button
