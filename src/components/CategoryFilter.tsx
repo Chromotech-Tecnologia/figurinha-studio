@@ -23,49 +23,53 @@ export const CategoryFilter = ({ selectedCategory, onCategoryChange }: CategoryF
 
   const loadCategories = async () => {
     try {
-      // Get all sticker packs with their categories and quantities
-      const { data: packs, error } = await supabase
-        .from('sticker_packs')
-        .select('category, quantity');
+      // Get categories from database with pack counts
+      const { data: categoriesData, error: categoriesError } = await supabase
+        .from('categories')
+        .select(`
+          id,
+          name,
+          color,
+          pack_categories!inner(
+            pack_id,
+            sticker_packs!inner(
+              quantity
+            )
+          )
+        `);
 
-      if (error) throw error;
+      if (categoriesError) throw categoriesError;
 
-      // Count packs and total stickers by category
-      const categoryMap = new Map<string, { count: number; totalStickers: number }>();
-      let totalPacks = 0;
+      // Calculate totals
       let totalStickers = 0;
+      const categoryList: Category[] = [];
 
-      packs?.forEach(pack => {
-        const category = pack.category;
-        const quantity = pack.quantity || 1;
-        
-        totalPacks++;
-        totalStickers += quantity;
+      // Get all packs to calculate total
+      const { data: allPacks } = await supabase
+        .from('sticker_packs')
+        .select('quantity');
+      
+      if (allPacks) {
+        totalStickers = allPacks.reduce((sum, pack) => sum + (pack.quantity || 1), 0);
+      }
 
-        if (categoryMap.has(category)) {
-          const existing = categoryMap.get(category)!;
-          categoryMap.set(category, {
-            count: existing.count + 1,
-            totalStickers: existing.totalStickers + quantity
-          });
-        } else {
-          categoryMap.set(category, {
-            count: 1,
-            totalStickers: quantity
-          });
-        }
+      // Add "All" category
+      categoryList.push({
+        id: "all",
+        name: "Todas",
+        count: totalStickers
       });
 
-      // Create categories array
-      const categoryList: Category[] = [
-        { id: "all", name: "Todas", count: totalStickers }
-      ];
+      // Process each category
+      categoriesData?.forEach(category => {
+        const categoryStickers = category.pack_categories?.reduce((sum, pc: any) => {
+          return sum + (pc.sticker_packs?.quantity || 1);
+        }, 0) || 0;
 
-      categoryMap.forEach((data, categoryName) => {
         categoryList.push({
-          id: categoryName.toLowerCase().replace(/\s+/g, '-'),
-          name: categoryName,
-          count: data.totalStickers
+          id: category.id,
+          name: category.name,
+          count: categoryStickers
         });
       });
 
@@ -75,10 +79,6 @@ export const CategoryFilter = ({ selectedCategory, onCategoryChange }: CategoryF
       // Fallback categories
       setCategories([
         { id: "all", name: "Todas", count: 0 },
-        { id: "emojis", name: "Emojis", count: 0 },
-        { id: "animais", name: "Animais", count: 0 },
-        { id: "memes", name: "Memes", count: 0 },
-        { id: "amor", name: "Amor", count: 0 },
       ]);
     }
   };

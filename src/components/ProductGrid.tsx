@@ -94,27 +94,51 @@ export const ProductGrid = ({ selectedCategory }: ProductGridProps) => {
   }, [selectedCategory, allProducts]);
 
   const loadProducts = async () => {
-    const { data, error } = await supabase
-      .from('sticker_packs')
-      .select('*')
-      .order('created_at', { ascending: false });
+    try {
+      const { data, error } = await supabase
+        .from('sticker_packs')
+        .select(`
+          *,
+          pack_categories(
+            categories(
+              id,
+              name
+            )
+          )
+        `)
+        .order('created_at', { ascending: false });
 
-    if (data && data.length > 0) {
-      setAllProducts(data);
-    } else {
-      // Use mock data if no products in database
+      if (error) throw error;
+
+      if (data && data.length > 0) {
+        setAllProducts(data);
+      } else {
+        // Use mock data if no products in database
+        setAllProducts(mockProducts);
+      }
+    } catch (error) {
+      console.error('Error loading products:', error);
+      // Use mock data on error
       setAllProducts(mockProducts);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const filterProducts = () => {
     if (selectedCategory === "all") {
       setFilteredProducts(allProducts);
     } else {
-      const filtered = allProducts.filter(product => 
-        product.category.toLowerCase().replace(/\s+/g, '-') === selectedCategory
-      );
+      const filtered = allProducts.filter((product: any) => {
+        // Check if product has categories from new structure
+        if (product.pack_categories && product.pack_categories.length > 0) {
+          return product.pack_categories.some((pc: any) => 
+            pc.categories && pc.categories.id === selectedCategory
+          );
+        }
+        // Fallback to old category system for mock data
+        return product.category.toLowerCase().replace(/\s+/g, '-') === selectedCategory;
+      });
       setFilteredProducts(filtered);
     }
   };

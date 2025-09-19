@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Switch } from "@/components/ui/switch";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -21,6 +21,12 @@ interface PackImage {
   display_order: number;
 }
 
+interface Category {
+  id: string;
+  name: string;
+  color: string;
+}
+
 const AdminPackForm = () => {
   const { id } = useParams();
   const { user } = useAuth();
@@ -31,7 +37,6 @@ const AdminPackForm = () => {
     name: "",
     description: "",
     price: "",
-    category: "",
     image_url: "",
     quantity: "1",
     sticker_files_url: "",
@@ -39,26 +44,30 @@ const AdminPackForm = () => {
     is_new: false,
   });
   const [packImages, setPackImages] = useState<PackImage[]>([]);
-
-  const categories = [
-    "Emojis",
-    "Animais", 
-    "Memes",
-    "Amor",
-    "Comida",
-    "Esportes",
-    "Trabalho",
-    "Família",
-    "Humor",
-    "Motivação"
-  ];
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
 
   useEffect(() => {
     checkAdminAccess();
+    loadCategories();
     if (id) {
       loadPack();
     }
   }, [id, user]);
+
+  const loadCategories = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('categories')
+        .select('*')
+        .order('name');
+
+      if (error) throw error;
+      setCategories(data || []);
+    } catch (error) {
+      console.error('Error loading categories:', error);
+    }
+  };
 
   const checkAdminAccess = async () => {
     if (!user) {
@@ -101,13 +110,22 @@ const AdminPackForm = () => {
       name: data.name,
       description: data.description || "",
       price: data.price.toString(),
-      category: data.category,
       image_url: data.image_url || "",
       quantity: data.quantity?.toString() || "1",
       sticker_files_url: data.sticker_files_url || "",
       is_featured: data.is_featured,
       is_new: data.is_new,
     });
+
+    // Load pack categories
+    const { data: packCategoriesData, error: categoriesError } = await supabase
+      .from('pack_categories')
+      .select('category_id')
+      .eq('pack_id', id);
+
+    if (!categoriesError && packCategoriesData) {
+      setSelectedCategories(packCategoriesData.map(pc => pc.category_id));
+    }
 
     // Load pack images
     const { data: images, error: imagesError } = await supabase
@@ -130,7 +148,7 @@ const AdminPackForm = () => {
         name: formData.name,
         description: formData.description,
         price: parseFloat(formData.price),
-        category: formData.category,
+        category: selectedCategories.length > 0 ? categories.find(c => c.id === selectedCategories[0])?.name || "Diversos" : "Diversos",
         image_url: formData.image_url,
         quantity: parseInt(formData.quantity),
         sticker_files_url: formData.sticker_files_url || null,
@@ -194,6 +212,33 @@ const AdminPackForm = () => {
         }
       }
 
+      // Handle pack categories
+      if (packId) {
+        // Delete existing categories if updating
+        if (id) {
+          await supabase
+            .from('pack_categories')
+            .delete()
+            .eq('pack_id', packId);
+        }
+
+        // Insert new categories
+        if (selectedCategories.length > 0) {
+          const categoryData = selectedCategories.map(categoryId => ({
+            pack_id: packId,
+            category_id: categoryId
+          }));
+
+          const { error: categoriesError } = await supabase
+            .from('pack_categories')
+            .insert(categoryData);
+
+          if (categoriesError) {
+            console.error('Error saving categories:', categoriesError);
+          }
+        }
+      }
+
       toast({
         title: id ? "Pack atualizado" : "Pack criado",
         description: id ? "Pack atualizado com sucesso" : "Novo pack criado com sucesso",
@@ -209,6 +254,14 @@ const AdminPackForm = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const toggleCategory = (categoryId: string) => {
+    setSelectedCategories(prev => 
+      prev.includes(categoryId)
+        ? prev.filter(id => id !== categoryId)
+        : [...prev, categoryId]
+    );
   };
 
   const addImage = () => {
@@ -299,23 +352,30 @@ const AdminPackForm = () => {
                     />
                   </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="category">Categoria</Label>
-                    <Select 
-                      value={formData.category} 
-                      onValueChange={(value) => setFormData({...formData, category: value})}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecione uma categoria" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {categories.map((category) => (
-                          <SelectItem key={category} value={category}>
-                            {category}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                  <div className="space-y-3">
+                    <Label>Categorias</Label>
+                    <div className="grid grid-cols-2 gap-3">
+                      {categories.map((category) => (
+                        <div key={category.id} className="flex items-center space-x-2">
+                          <Checkbox
+                            id={category.id}
+                            checked={selectedCategories.includes(category.id)}
+                            onCheckedChange={() => toggleCategory(category.id)}
+                          />
+                          <Label 
+                            htmlFor={category.id}
+                            className="text-sm font-normal cursor-pointer"
+                          >
+                            {category.name}
+                          </Label>
+                        </div>
+                      ))}
+                    </div>
+                    {selectedCategories.length === 0 && (
+                      <p className="text-sm text-muted-foreground">
+                        Selecione pelo menos uma categoria
+                      </p>
+                    )}
                   </div>
                 </div>
 

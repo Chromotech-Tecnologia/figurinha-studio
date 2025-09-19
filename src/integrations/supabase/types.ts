@@ -53,6 +53,33 @@ export type Database = {
           },
         ]
       }
+      categories: {
+        Row: {
+          color: string | null
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          color?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       order_items: {
         Row: {
           created_at: string
@@ -169,6 +196,42 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pack_categories: {
+        Row: {
+          category_id: string
+          created_at: string
+          id: string
+          pack_id: string
+        }
+        Insert: {
+          category_id: string
+          created_at?: string
+          id?: string
+          pack_id: string
+        }
+        Update: {
+          category_id?: string
+          created_at?: string
+          id?: string
+          pack_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pack_categories_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pack_categories_pack_id_fkey"
+            columns: ["pack_id"]
+            isOneToOne: false
+            referencedRelation: "sticker_packs"
             referencedColumns: ["id"]
           },
         ]

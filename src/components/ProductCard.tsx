@@ -54,7 +54,6 @@ export const ProductCard = ({ id, name, image, price, category, quantity = 1, is
 
           {/* Badges */}
           <div className="absolute top-3 left-3 flex gap-2">
-            <Badge variant="secondary" className="text-xs">{category}</Badge>
             {isNew && <Badge className="bg-accent text-accent-foreground">Novo</Badge>}
           </div>
         </div>

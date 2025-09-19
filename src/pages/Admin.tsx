@@ -17,6 +17,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Plus, Package, Users, BarChart3, ArrowLeft, Edit, Trash2, Check, Clock, ExternalLink, RotateCcw, Archive } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { PaymentLinkDialog } from "@/components/PaymentLinkDialog";
+import { CategoryManager } from "@/components/CategoryManager";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import logoImage from "@/assets/figurinha-logo.png";
 
@@ -345,6 +346,7 @@ const Admin = () => {
           <TabsList>
             <TabsTrigger value="overview">Visão Geral</TabsTrigger>
             <TabsTrigger value="packs">Packs de Figurinhas</TabsTrigger>
+            <TabsTrigger value="categories">Categorias</TabsTrigger>
             <TabsTrigger value="orders">
               Pedidos
               {stats.pendingOrders > 0 && (
@@ -497,6 +499,10 @@ const Admin = () => {
                 </div>
               )}
             </div>
+          </TabsContent>
+
+          <TabsContent value="categories" className="space-y-6">
+            <CategoryManager />
           </TabsContent>
 
           <TabsContent value="orders" className="space-y-6">
