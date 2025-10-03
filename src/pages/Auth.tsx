@@ -62,7 +62,7 @@ const Auth = () => {
     
     setLoading(true);
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/auth?tab=reset-password`
+      redirectTo: 'https://figurinhastudio.com.br/auth?tab=reset-password'
     });
     
     if (error) {
