@@ -58,7 +58,7 @@ Deno.serve(async (req) => {
     }
 
     const { error } = await resend.emails.send({
-      from: 'Figurinha Studio <onboarding@resend.dev>',
+      from: 'Figurinha Studio <no-reply@figurinhastudio.com.br>',
       to: [user.email],
       subject,
       html,
