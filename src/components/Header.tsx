@@ -4,6 +4,8 @@ import { Input } from "./ui/input";
 import { CartSheet } from "./CartSheet";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import { 
   DropdownMenu, 
   DropdownMenuContent, 
@@ -16,6 +18,22 @@ import logoImage from "@/assets/figurinha-logo.png";
 export const Header = () => {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  useEffect(() => {
+    if (user) {
+      supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', user.id)
+        .single()
+        .then(({ data }) => {
+          setIsAdmin(data?.role === 'admin');
+        });
+    } else {
+      setIsAdmin(false);
+    }
+  }, [user]);
 
   const handleSignOut = async () => {
     await signOut();
@@ -71,10 +89,12 @@ export const Header = () => {
                     <ShoppingCart className="w-4 h-4 mr-2" />
                     Meus Pedidos
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => navigate("/admin")}>
-                    <Settings className="w-4 h-4 mr-2" />
-                    Administração
-                  </DropdownMenuItem>
+                  {isAdmin && (
+                    <DropdownMenuItem onClick={() => navigate("/admin")}>
+                      <Settings className="w-4 h-4 mr-2" />
+                      Administração
+                    </DropdownMenuItem>
+                  )}
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={handleSignOut}>
                     <LogOut className="w-4 h-4 mr-2" />
